@@ -58,7 +58,7 @@ def create_ticket(json_data):
 def assign_and_save_ticket(ticket):
   """Assign ticket to a representative and save it"""
 
-  users_datafile = 'sample_users_data.pickle'
+  users_datafile = 'data/sample_users_data.pickle'
 
   with FileLock(users_datafile+'.lock'):
     users_data = None
@@ -82,7 +82,9 @@ def assign_and_save_ticket(ticket):
     return ticket
 
 def implement_round_robin():
-  with open('round_robin_turn.pickle', "rb") as f:
+  """Assign tickets to users by taking turns"""
+  datafile = 'data/round_robin_turn.pickle'
+  with open(datafile, "rb") as f:
     data = pickle.load(f)
     assigned_to = data.get('assigned_to')
     ticket_id = data.get('ticket_id')
@@ -90,7 +92,7 @@ def implement_round_robin():
     f.close()
 
   new_assigned_to = assigned_to+1 if assigned_to < total_users else 1
-  with open('round_robin_turn.pickle', "wb") as f:
+  with open(datafile, "wb") as f:
     pickle.dump({
       'ticket_id': ticket_id+1,
       'assigned_to': new_assigned_to,

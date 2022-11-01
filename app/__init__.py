@@ -11,10 +11,12 @@ def create_app():
     # Adding API endpoints
     api.add_resource(CreateTicketAPI, '/ticket')
 
+    # Do something only once before very first request
     @app.before_first_request
     def before_first_request():
-        # Sample data to be saved in a file
-        users_datafile = 'sample_users_data.pickle'
+        """Create and save sample data in a file"""
+        os.system('mkdir -p data')
+        users_datafile = 'data/sample_users_data.pickle'
         if os.path.exists(users_datafile):
             with open(users_datafile, "rb") as f:
                 sample_data = pickle.load(f)
@@ -35,11 +37,12 @@ def create_app():
         with open(users_datafile, "wb") as f:
             pickle.dump(sample_data, f)
             f.close()
-        with open('round_robin_turn.pickle', "wb") as f:
+        with open('data/round_robin_turn.pickle', "wb") as f:
             pickle.dump({'ticket_id': 1, 'assigned_to': 1, 'total_users': 5}, f)
             f.close()
 
     @app.route('/', defaults={'_path': ''})
+    @app.route('/<path:_path>')
     def api_documentation(_path):
         """
         Endpoint for API documentation HTML
@@ -53,8 +56,6 @@ def create_app():
             class_name = view_class.__name__
             class_doc = view_class.__doc__.strip()
             urls = sorted([r.rule for r in app.url_map._rules_by_endpoint[endpoint]])
-            print(urls)
-            # category = [x for x in urls[0].split('/') if x][1]
             category = 'API'
             if category not in docs:
                 docs[category] = {}
