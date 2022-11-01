@@ -1,0 +1,120 @@
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: ticketing-system
+  annotations:
+    description: Keeps track of changes in the application image
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: ticketing-system
+  annotations:
+    description: Defines how to build the application
+    template.alpha.openshift.io/wait-for-ready: 'true'
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/pkalbhor/ticketing-system-api.git
+      ref: main
+    contextDir: /
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: docker/Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: ticketing-system:latest
+  triggers:
+  - type: ImageChange
+  - type: ConfigChange
+  - type: GitHub
+    github:
+      secret: Fdfsdkjeri$498533FrisinvRi2938VM94V^fds
+---
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  name: ticketing-system
+  annotations:
+    description: Defines how to deploy the application server
+    template.alpha.openshift.io/wait-for-ready: 'true'
+spec:
+  strategy:
+    type: Recreate
+  triggers:
+  - type: ImageChange
+    imageChangeParams:
+      automatic: true
+      containerNames:
+      - ticketing-system
+      from:
+        kind: ImageStreamTag
+        name: ticketing-system:latest
+  - type: ConfigChange
+  replicas: 1
+  selector:
+    name: ticketing-system
+  template:
+    metadata:
+      name: ticketing-system
+      labels:
+        name: ticketing-system
+    spec:
+      volumes:
+      - name: application-data
+      containers:
+      - name: ticketing-system
+        image: " "
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: application-data
+          mountPath: /home/pritam/data
+        env:
+        - name: TEST_ENV
+          value: test
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ticketing-system
+  annotations:
+    description: Exposes and load balances the application pods
+    service.alpha.openshift.io/dependencies: ''
+spec:
+  ports:
+  - name: web
+    port: 8080
+    targetPort: 8080
+  selector:
+    name: ticketing-system
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: ticketing-system
+  annotations:
+    haproxy.router.openshift.io/ip_whitelist: ""
+spec:
+  host: ticketing-system.web.cern.ch
+  to:
+    kind: Service
+    name: ticketing-system
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: application-data
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
