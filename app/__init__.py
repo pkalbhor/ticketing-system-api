@@ -2,7 +2,10 @@ import os
 import pickle
 from flask import Flask, render_template
 from flask_restful import Api
-from api.ticket_api import CreateTicketAPI
+from api.ticket_api import (CreateTicketAPI,
+                            GetListOfTicketsAPI,
+                            GetListOfAssignee
+                           )
 
 def create_app():
     app = Flask(__name__)
@@ -10,6 +13,8 @@ def create_app():
 
     # Adding API endpoints
     api.add_resource(CreateTicketAPI, '/ticket')
+    api.add_resource(GetListOfTicketsAPI, '/get_tickets')
+    api.add_resource(GetListOfAssignee, '/get/assignees')
 
     # Do something only once before very first request
     @app.before_first_request

@@ -15,6 +15,48 @@ class CreateTicketAPI(Resource):
     response = create_ticket(json_data)
     return response, 201
 
+class GetListOfTicketsAPI(Resource):
+  """
+  Endpoint for getting a list of tickets
+  """
+  def get(self):
+    """Returns list of tickets available in a system"""
+    response = get_ticket_list()
+    return response, 200
+
+class GetListOfAssignee(Resource):
+  """
+  Endpoint for getting a list of people to whom we assign tickets
+  """
+  def get(self):
+    """Returns list of people saved as a sample"""
+    users_datafile = 'data/sample_users_data.pickle'
+    with FileLock(users_datafile+'.lock'):
+      with open(users_datafile, 'rb') as f:
+        users = pickle.load(f)
+        f.close()
+    response = {
+      'message': 'List of assignee fetched',
+      'success': True,
+      'data'   : list(users.values())
+      }
+    return response, 200
+
+def get_ticket_list():
+  """Returns list of tickets after fetching from file"""
+  data = []
+  with open('data/tickets.pickle', 'rb') as f:
+    try:
+      while True:
+        data.append(pickle.load(f))
+    except EOFError:
+      f.close()
+  return {
+    'message': 'List of tickets fetched',
+    'success': True,
+    'data'   : data
+  }
+
 def validate_data(data):
   """
   Validate data and return appropriate response
@@ -66,7 +108,7 @@ def assign_and_save_ticket(ticket):
       users_data = pickle.load(f)
       f.close()
 
-    # Get possible assignee for a ticket
+    # Get possible assignee, ticket_id for a ticket
     assigned_to, ticket_id = implement_round_robin()
 
     # Assign ticket
@@ -77,8 +119,13 @@ def assign_and_save_ticket(ticket):
       pickle.dump(users_data, f)
       f.close()
 
-    ticket['ticket_id'] = ticket_id
-    ticket['assigned_to'] = assigned_to
+    ticket['ticket_id'] = str(ticket_id)
+    ticket['assigned_to'] = str(assigned_to)
+
+    # Save tickets
+    with open('data/tickets.pickle', 'ab+') as f:
+      pickle.dump(ticket, f)
+      f.close()
     return ticket
 
 def implement_round_robin():
