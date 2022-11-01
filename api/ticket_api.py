@@ -75,6 +75,12 @@ def validate_data(data):
       message = "Bad request! Expected following keys in a data: 'user_id', 'issue' ",
       success = False)
 
+  # Here custom validators could be added to verify user_id and issue
+  if not (json_data.get('user_id').strip() or json_data.get('issue').strip()):
+    abort(400,
+      message = "Bad request! 'user_id' or 'issue' field can not be empty",
+      success = False)
+
   return json_data
     
 def create_ticket(json_data):
