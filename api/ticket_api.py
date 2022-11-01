@@ -76,7 +76,7 @@ def validate_data(data):
       success = False)
 
   # Here custom validators could be added to verify user_id and issue
-  if not (json_data.get('user_id').strip() or json_data.get('issue').strip()):
+  if not (json_data.get('user_id').strip() and json_data.get('issue').strip()):
     abort(400,
       message = "Bad request! 'user_id' or 'issue' field can not be empty",
       success = False)
